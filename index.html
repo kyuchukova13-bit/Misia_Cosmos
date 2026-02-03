@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <title>Космическо Сметало: Адмиралски Рапорт</title>
+    <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@700;900&display=swap" rel="stylesheet">
+    <style>
+        :root { --space: #1a3a6c; --neon: #00f2ff; --pink: #ff007f; --gold: #ffd700; }
+        body { background: radial-gradient(circle, var(--space), #0d1b31); margin: 0; color: white; font-family: 'Exo 2', sans-serif; display: flex; flex-direction: column; height: 100vh; overflow: hidden; align-items: center; }
+        
+        #menu, #finish-screen, #nav-modal { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; background: rgba(13, 27, 49, 0.98); }
+        .box { background: white; padding: 40px; border-radius: 30px; border: 8px solid var(--neon); color: #333; text-align: center; box-shadow: 0 0 30px var(--neon); min-width: 450px; }
+        
+        .top-bar { width: 100%; display: flex; justify-content: space-between; padding: 15px 50px; align-items: center; background: rgba(0,0,0,0.3); }
+        #hint-bar { background: rgba(0,210,255,0.1); padding: 15px 30px; border-radius: 50px; border: 3px solid var(--neon); font-size: 1.4rem; color: var(--neon); font-weight: 900; min-width: 400px; text-align: center; }
+        
+        .row-container { display: flex; gap: 8px; background: rgba(0,0,0,0.3); padding: 12px; border: 3px solid var(--neon); border-radius: 15px; margin: 10px; }
+        .cell { width: 65px; height: 65px; border: 2px solid rgba(255,255,255,0.2); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 3rem; background: rgba(255,255,255,0.05); }
+        
+        .btn-wide { min-width: 280px; padding: 18px; font-size: 1.4rem; font-weight: 900; border-radius: 20px; cursor: pointer; border: none; text-transform: uppercase; margin: 10px; }
+        .btn-add { background: var(--neon); color: #004d40; }
+        .num-btn { height: 70px; width: 85px; font-size: 2rem; font-weight: 900; border-radius: 15px; cursor: pointer; border: 3px solid var(--neon); background: white; margin: 5px; }
+        
+        .ans-box { border: 4px solid var(--pink); padding: 5px 20px; border-radius: 15px; min-width: 85px; display: inline-block; color: var(--pink); background: rgba(0,0,0,0.5); font-size: 2.5rem; }
+        #rocket-body { font-size: 4.5rem; transition: 2.5s cubic-bezier(0.47, 0, 0.745, 0.715); display: inline-block; }
+        .rocket-fly { transform: translateY(-120vh) scale(2.5); filter: brightness(2); }
+
+        .report-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; text-align: left; margin: 20px 0; font-size: 1.2rem; }
+        .report-item { background: #f0f8ff; padding: 10px; border-radius: 10px; border-left: 5px solid var(--neon); }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+        .shake { animation: shake 0.3s; }
+    </style>
+</head>
+<body>
+
+<div id="nav-modal" style="display:none;">
+    <div class="box">
+        <h2>🛠️ ТЕХНИЧЕСКИ ПАНЕЛ</h2>
+        <button class="btn-wide btn-add" onclick="changeMode()">🔄 СМЯНА НА МИСИЯТА</button>
+        <button class="btn-wide" style="background:var(--pink); color:white" onclick="location.reload()">🏁 КРАЙ</button>
+        <button class="btn-wide" style="background:#ddd" onclick="closeNav()">❌ НАЗАД</button>
+    </div>
+     </div>
+
+<div id="menu">
+    <h1 style="font-size: 3rem; color: var(--neon);">🚀 ГАЛАКТИЧЕСКИ ПЪТЕШЕСТВЕНИК</h1>
+    <input type="text" id="p-name" placeholder="ИМЕ НА ПИЛОТА..." style="font-size: 1.8rem; padding: 15px; border-radius: 15px; text-align: center; border: 3px solid var(--neon); width: 350px;">
+    <div style="margin-top:20px;">
+        <button class="btn-wide btn-add" onclick="start('add')">🚀 СЪБИРАНЕ (+)</button>
+        <button class="btn-wide" style="background:var(--pink); color:white" onclick="start('sub')">🛰️ ИЗВАЖДАНЕ (-)</button>
+    </div>
+</div>
+
+<div id="finish-screen" style="display:none;">
+    <div class="box">
+        <h1 style="color: var(--space); margin:0;">📊 ДОКЛАД ОТ ПОЛЕТА</h1>
+        <p style="font-size: 1.4rem; margin: 5px 0;">Пилот: <span id="res-name" style="color:var(--pink); font-weight:900;"></span></p>
+        <div class="report-grid">
+            <div class="report-item">✅ Задачи: <b id="res-tasks">0</b></div>
+            <div class="report-item">⭐ Енергия: <b id="res-pts">0</b></div>
+            <div class="report-item">⏱️ Време: <b id="res-time">0</b> сек</div>
+            <div class="report-item">⚠️ Грешки: <b id="res-err">0</b></div>
+        </div>
+        <button class="btn-wide btn-add" onclick="cont()">НОВА ГАЛАКТИКА 🌌</button>
+    </div>
+</div>
+
+<div class="top-bar">
+    <div style="font-size:4rem; cursor:pointer;" onclick="openNav()">🏠</div>
+    <div id="hint-bar">ОЧАКВАНЕ НА ЗАПОВЕД...</div>
+    <div class="rocket-status">
+        <div id="rocket-body">🚀</div>
+        <div style="width:120px; height:10px; background:rgba(255,255,255,0.2); border-radius:5px; margin-top:5px; overflow:hidden;">
+            <div id="fuel" style="width:0%; height:100%; background:var(--gold); transition:0.5s;"></div>
+        </div>
+    </div>
+</div>
+
+<div style="display:flex; gap:40px; align-items:center; flex:1; width:90%;">
+    <div>
+        <div class="row-container" id="r1"></div>
+        <div class="row-container" id="r2" style="border-color:var(--pink)"></div>
+        <div id="wait" style="min-height:90px; display:flex; gap:10px; justify-content:center; margin-top:15px;"></div>
+    </div>
+    <div style="background:rgba(255,255,255,0.1); padding:25px; border-radius:25px; border:2px solid rgba(255,255,255,0.2);">
+        <div id="eq" style="font-size: 2.2rem; margin-bottom:20px; font-weight:900;"></div>
+        <div id="kbd" style="opacity:0.2; pointer-events:none;">
+            <div style="display:grid; grid-template-columns: repeat(3, 1fr);">
+                <button class="num-btn" onclick="tap(1)">1</button><button class="num-btn" onclick="tap(2)">2</button><button class="num-btn" onclick="tap(3)">3</button>
+                <button class="num-btn" onclick="tap(4)">4</button><button class="num-btn" onclick="tap(5)">5</button><button class="num-btn" onclick="tap(6)">6</button>
+                <button class="num-btn" onclick="tap(7)">7</button><button class="num-btn" onclick="tap(8)">8</button><button class="num-btn" onclick="tap(9)">9</button>
+                <button class="num-btn" style="grid-column:span 3; width:100%" onclick="tap(0)">0</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let mode='', pts=0, total=0, count=0, typed='', task={}, items=['💎','🔮','⚛️','🔋','☄️'], audioCtx;
+    let errors=0, startTime, missionCount=0;
+
+    function snd(f, d, v=0.1) {
+        if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
+        o.connect(g); g.connect(audioCtx.destination);
+        o.frequency.setValueAtTime(f, audioCtx.currentTime);
+        g.gain.setValueAtTime(v, audioCtx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + d);
+        o.start(); o.stop(audioCtx.currentTime + d);
+    }
+
+    function start(m) {
+        const name = document.getElementById('p-name').value;
+        if(!name) return alert("Пилот, въведете име!");
+        mode=m; document.getElementById('menu').style.display='none';
+        startTime = Date.now(); missionCount = 0; errors = 0; pts = 0;
+        next();
+    }
+
+    function next() {
+        if(total >= 10) return launch();
+        count=0; typed=''; document.getElementById('kbd').style.opacity="0.2"; document.getElementById('kbd').style.pointerEvents="none";
+        
+        let n1, n2;
+        if(mode==='add') { n1=Math.floor(Math.random()*3)+7; n2=Math.floor(Math.random()*3)+7; task={n1, n2, res:n1+n2, t10:10-n1}; }
+        else { let r=Math.floor(Math.random()*4)+6; n2=Math.floor(Math.random()*3)+7; n1=r+n2; task={n1, n2, res:r, t10:n1-10}; }
+
+        const itm1 = items[Math.floor(Math.random()*items.length)];
+        const itm2 = items[(items.indexOf(itm1)+1)%items.length];
+        
+        document.getElementById('eq').innerHTML = `${task.n1}${mode==='add'?'+':'-'}${task.n2}=${task.n1}${mode==='add'?'+':'-'}<span id="s1">?</span>${mode==='add'?'+':'-'}<span id="s2">?</span>=<span id="ans" class="ans-box">?</span>`;
+        document.getElementById('hint-bar').innerText = `👨‍🚀 ПИЛОТ ${document.getElementById('p-name').value.toUpperCase()}, СИСТЕМИТЕ СА ГОТОВИ!`;
+
+        const r1=document.getElementById('r1'); const r2=document.getElementById('r2'); const wait=document.getElementById('wait');
+        r1.innerHTML=r2.innerHTML=wait.innerHTML='';
+        
+        for(let i=0; i<20; i++) {
+            const c = document.createElement('div'); c.className='cell'; c.id='c'+i;
+            if(i<task.n1) {
+                c.innerText = itm1;
+                if(mode==='sub') c.onclick = () => {
+                    if(count < task.n2 && i === (task.n1 - count - 1)) { snd(400,0.1); c.style.opacity='0.2'; count++; step(); }
+                    else { snd(100,0.2); errors++; c.parentElement.classList.add('shake'); setTimeout(()=>c.parentElement.classList.remove('shake'),300); }
+                };
+            }
+            i<10 ? r1.appendChild(c) : r2.appendChild(c);
+        }
+
+        if(mode==='add') {
+            for(let i=0; i<task.n2; i++) {
+                const t = document.createElement('div'); t.innerText=itm2; t.style.fontSize='3rem'; t.style.cursor='pointer';
+                t.onclick = () => { snd(600,0.1); t.style.visibility='hidden'; document.getElementById('c'+(task.n1+count)).innerText = itm2; count++; step(); };
+                wait.appendChild(t);
+            }
+        }
+    }
+
+    function step() {
+        if(count === task.t10) { document.getElementById('s1').innerText = task.t10; snd(900,0.2); }
+        if(count === task.n2) { 
+            document.getElementById('s2').innerText = (task.n2 - task.t10); 
+            document.getElementById('hint-bar').innerText = "⌨️ КРИТИЧНО НИВО! ВЪВЕДИ РЕЗУЛТАТ:";
+            document.getElementById('kbd').style.opacity="1"; document.getElementById('kbd').style.pointerEvents="all";
+        }
+    }
+
+    function tap(n) {
+        typed += n; if(typed.length > 2) typed = n.toString();
+        document.getElementById('ans').innerText = typed;
+        if(parseInt(typed) === task.res) {
+            snd(1200, 0.3); pts += 10; total++; missionCount++;
+            document.getElementById('fuel').style.width = (total*10)+'%';
+            setTimeout(next, 1000);
+        } else if(typed.length >= 2) { snd(150, 0.5); errors++; typed=''; document.getElementById('ans').innerText='?'; }
+    }
+
+    function launch() {
+        snd(60, 2.5, 0.5); // Тътен на двигател
+        document.getElementById('rocket-body').classList.add('rocket-fly');
+        setTimeout(() => {
+            const timeDiff = Math.floor((Date.now() - startTime) / 1000);
+            document.getElementById('finish-screen').style.display='flex';
+            document.getElementById('res-name').innerText = document.getElementById('p-name').value.toUpperCase();
+            document.getElementById('res-tasks').innerText = missionCount;
+            document.getElementById('res-pts').innerText = pts;
+            document.getElementById('res-time').innerText = timeDiff;
+            document.getElementById('res-err').innerText = errors;
+        }, 2000);
+    }
+
+    function cont() {
+        total=0; document.getElementById('fuel').style.width='0%';
+        document.getElementById('rocket-body').classList.remove('rocket-fly');
+        document.getElementById('finish-screen').style.display='none';
+        startTime = Date.now(); next();
+    }
+    function openNav() { document.getElementById('nav-modal').style.display='flex'; }
+    function closeNav() { document.getElementById('nav-modal').style.display='none'; }
+    function changeMode() { mode=(mode==='add'?'sub':'add'); total=0; closeNav(); next(); }
+</script>
+</body>
+</html>
